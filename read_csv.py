@@ -28,15 +28,17 @@ def learning(learning_rate, epoch, ratings, true_value):
     V = np.zeros(ratings.shape[0])
     U = np.zeros(ratings.shape[1])
     for _ in range(epoch):
+        F = np.add.outer(V,U)
+        gradient_V = np.sum(ratings-F*true_value, axis = 1)
+        gradient_U = np.sum(ratings-F*true_value, axis = 0)
+        V += 2*learning_rate*gradient_V
+        V = V*0.98
+        U += 2*learning_rate*gradient_U
+        U = U*0.98
         if _%500 == 0:
             print(f"{_//500}/10 has finished")
             print(gradient_V[:10])
             print(V[:10])
-        F = np.add.outer(V,U)
-        gradient_V = np.sum(ratings-F*true_value, axis = 1)*0.98
-        gradient_U = np.sum(ratings-F*true_value, axis = 0)*0.98
-        V += 2*learning_rate*gradient_V
-        U += 2*learning_rate*gradient_U
     return V, U
 
 if __name__ == "__main__":
