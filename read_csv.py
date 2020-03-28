@@ -6,7 +6,26 @@ def read(path):
     df = pd.read_csv(path)
     return df
 
-def save(df):
+def bias_save(name, vector):
+    df = pd.DataFrame({name:[i for i in range(1, len(vector)+1)],
+                       "bias": vector})
+    df.to_csv(f"./dataset/{name}.csv")
+    return
+
+def save(ratings):
+    temp = {"userID":[],
+            "movieID":[],
+            "rating":[]}
+    print("Start")
+    for user in range(config.nusers):
+        for movie in range(config.nmovies):
+            if ratings[user][movie]:
+                temp["userID"].append(user+1)
+                temp["movieID"].append(movie+1)
+                temp["rating"].append(ratings[user][movie])
+    print("End")
+    print("Length of ratings: ", len(temp["userID"]))
+    df = pd.DataFrame(temp)
     df.to_csv("./dataset/balanced.csv")
     return
 
@@ -27,18 +46,18 @@ def convert_to_matrix(df):
 def learning(learning_rate, epoch, ratings, true_value):
     V = np.zeros(ratings.shape[0])
     U = np.zeros(ratings.shape[1])
-    for _ in range(epoch):
+    for _ in range(1, epoch+1):
         F = np.add.outer(V,U)
-        gradient_V = np.sum(ratings-F*true_value, axis = 1)
-        gradient_U = np.sum(ratings-F*true_value, axis = 0)
+        gradient_V = np.sum(ratings-F*true_value, axis = 1) - 2*config.lamda * V
+        gradient_U = np.sum(ratings-F*true_value, axis = 0) - 2*config.lamda * U
         V += 2*learning_rate*gradient_V
-        V = V*0.98
         U += 2*learning_rate*gradient_U
-        U = U*0.98
         if _%500 == 0:
-            print(f"{_//500}/10 has finished")
+            print(f"{_//200}/10 has finished")
             print(gradient_V[:10])
             print(V[:10])
+    bias_save("userID", V)
+    bias_save("movieID", U)
     return V, U
 
 if __name__ == "__main__":
@@ -46,5 +65,6 @@ if __name__ == "__main__":
     ratings, true_value = convert_to_matrix(df)
     users, movies = learning(config.learning_rate, config.epoch, ratings, true_value)
     bias = np.add.outer(users, movies)
-    balanced_df = pd.DataFrame(ratings-bias)
-    save(balanced_df)
+    bias = bias * true_value
+    balanced_ratings = ratings-bias
+    save(balanced_ratings)
