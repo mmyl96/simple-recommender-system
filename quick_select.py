@@ -1,6 +1,8 @@
 from random import *
 
 class TopK:
+    # In order to suit with CF recommender system,
+    # compute absolute value of original array
     def __init__(self, array, k):
         self.flag = 1
         self.ori_array = array
