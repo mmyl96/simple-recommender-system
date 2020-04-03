@@ -39,15 +39,18 @@ def convert_to_matrix(df):
         userID = int(df.loc[i][0]-1)
         movieID = int(df.loc[i][1]-1)
         rating = float(df.loc[i][2])
+        ## Get a more informative dataset
         ratings[userID, movieID] = rating - avg
         true_value[userID, movieID] = 1
     return ratings, true_value
 
 def learning(learning_rate, epoch, ratings, true_value):
+    ## Initialization of user bias vector and movie bias vector
     V = np.zeros(ratings.shape[0])
     U = np.zeros(ratings.shape[1])
     for _ in range(1, epoch+1):
         F = np.add.outer(V,U)
+        ## Solve this problem by Gradient Descent with L2 Regularization
         gradient_V = np.sum(ratings-F*true_value, axis = 1) - 2*config.lamda * V
         gradient_U = np.sum(ratings-F*true_value, axis = 0) - 2*config.lamda * U
         V += 2*learning_rate*gradient_V
