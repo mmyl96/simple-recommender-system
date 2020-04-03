@@ -52,10 +52,9 @@ def learning(learning_rate, epoch, ratings, true_value):
         gradient_U = np.sum(ratings-F*true_value, axis = 0) - 2*config.lamda * U
         V += 2*learning_rate*gradient_V
         U += 2*learning_rate*gradient_U
-        if _%500 == 0:
-            print(f"{_//200}/10 has finished")
-            print(gradient_V[:10])
-            print(V[:10])
+        if _%100 == 0:
+            print(f"{_//100}/{epoch//100} has finished")
+            print("Current Loss is: ", np.sum((ratings-F*true_value)**2, axis = (0,1)))
     bias_save("userID", V)
     bias_save("movieID", U)
     return V, U
