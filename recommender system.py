@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+from time import time
+
 from read_csv import read
 from config import config
 from quick_select import TopK
-from time import time
 
 def convert_to_matrix(df):
     nusers = config.nusers
@@ -14,7 +15,6 @@ def convert_to_matrix(df):
         movieID = int(df.loc[i][1]-1)
         rating = float(df.loc[i][2])
         ratings[userID, movieID] = rating
-    print("A matrix has been constructed")
     return ratings
 
 def similarity(u_i, u_k):
@@ -28,23 +28,25 @@ def pred_rating(userID, movieID):
         if u == userID:
             continue
         values[u] = similarity(ratings[userID-1], ratings[u])
-    Q = TopK(values, config.MaxUserNumber)
+    Q = TopK(values, config.MaxUserNumber) # Fast get results and their indices by using quick select
     sim, idx = Q.answer()
-    if sum(abs(sim)) == 0:
+    if sum(abs(sim)) == 0: # Avoid zero division
         return 0
+    ## Note that we do not only consider most similar but also most dissimilar
     return V[userID-1] + U[movieID-1] + sum([sim[i]*ratings[idx[i],movieID-1] for i in range(config.MaxUserNumber)])/sum(abs(sim))
 
 def prediction(userID):
     m_idx = np.where(ratings[userID-1]==0)[0] # Movies which user did not see yet
     values = np.zeros(config.nmovies)
-    print("Start")
     for m in m_idx:
         values[m] = pred_rating(userID, m+1)
     return np.argmax(values)+1 # Return index of movieID with highest score
 
 if __name__ == "__main__":
+    ## Read preprocessed data
     df = read("./dataset/balanced.csv")
-    df = df.drop(columns = ['Unnamed: 0']) # Remove useless column
+    df = df.drop(columns = ['Unnamed: 0'])
+    ## Preprocess of Data
     ratings = convert_to_matrix(df)
     user = read("./dataset/userID.csv")
     movie = read("./dataset/movieID.csv")
@@ -52,6 +54,7 @@ if __name__ == "__main__":
     U = movie[["bias"]].to_numpy()
     user = int(input("Please input userID: "))
     start = time()
+    ## Predicted movie of a particular user
     movie = prediction(user)
     print("Time cost:", (time()-start)/60)
     print("After computing, the most recommended movie is:", movie)
